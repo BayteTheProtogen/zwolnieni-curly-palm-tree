@@ -1,0 +1,297 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/lesson_models.dart';
+import '../providers/app_provider.dart';
+import '../widgets/mascot.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
+class LessonScreen extends StatefulWidget {
+  final Lesson lesson;
+
+  const LessonScreen({super.key, required this.lesson});
+
+  @override
+  State<LessonScreen> createState() => _LessonScreenState();
+}
+
+class _LessonScreenState extends State<LessonScreen> {
+  int _currentTaskIndex = 0;
+  bool _isAnswered = false;
+  int? _selectedOption;
+  bool _isCorrect = false;
+  MascotExpression _mascotExpression = MascotExpression.neutral;
+
+  void _checkAnswer(int index) {
+    if (_isAnswered) return;
+
+    final task = widget.lesson.tasks[_currentTaskIndex];
+    setState(() {
+      _selectedOption = index;
+      _isAnswered = true;
+      _isCorrect = (index == task.correctOptionIndex);
+      _mascotExpression = _isCorrect ? MascotExpression.happy : MascotExpression.sad;
+    });
+    _showFeedback();
+  }
+
+  void _showFeedback() {
+    final task = widget.lesson.tasks[_currentTaskIndex];
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: _isCorrect ? Colors.green[100] : Colors.red[100],
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        height: 250,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(_isCorrect ? Icons.check_circle : Icons.error, color: _isCorrect ? Colors.green : Colors.red, size: 40),
+                const SizedBox(width: 16),
+                Text(_isCorrect ? 'Świetnie!' : 'Nie martw się!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _isCorrect ? Colors.green[900] : Colors.red[900])),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(task.explanation, style: const TextStyle(fontSize: 18)),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _nextTask();
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: _isCorrect ? Colors.green : Colors.red, foregroundColor: Colors.white),
+                child: const Text('DALEJ'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _nextTask() {
+    if (_currentTaskIndex < widget.lesson.tasks.length - 1) {
+      setState(() {
+        _currentTaskIndex++;
+        _isAnswered = false;
+        _selectedOption = null;
+        _mascotExpression = MascotExpression.neutral;
+      });
+    } else {
+      _finishLesson();
+    }
+  }
+
+  void _finishLesson() {
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    provider.addXp(10);
+    provider.completeLesson(widget.lesson.id);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Lekcja Ukończona!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CyberMascot(expression: MascotExpression.dancing, size: 150),
+            const SizedBox(height: 16),
+            const Text('Zyskałeś +10 XP'),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () {
+            Navigator.pop(context);
+            Navigator.pop(context);
+          }, child: const Text('WRÓĆ DO MAPY')),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final task = widget.lesson.tasks[_currentTaskIndex];
+    final progress = (_currentTaskIndex + 1) / widget.lesson.tasks.length;
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+        title: Row(
+          children: [
+            Expanded(child: LinearProgressIndicator(value: progress, minHeight: 12, borderRadius: BorderRadius.circular(6))),
+            const SizedBox(width: 8),
+            Hero(
+              tag: 'lesson_${widget.lesson.id}',
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
+                child: const Icon(Icons.school, size: 16, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Hero(
+                  tag: 'mascot_main',
+                  child: CyberMascot(expression: _mascotExpression, size: 80),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(task.question, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                  ),
+                ),
+              ],
+            ).animate().fadeIn().slideX(),
+            const SizedBox(height: 32),
+            Expanded(
+              child: _buildTaskBody(task),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskBody(Task task) {
+    switch (task.type) {
+      case TaskType.multipleChoice:
+        return _buildMultipleChoice(task);
+      case TaskType.chatSimulation:
+        return _buildChatSimulation(task);
+      case TaskType.findTheCatch:
+        return _buildFindTheCatch(task);
+    }
+  }
+
+  Widget _buildMultipleChoice(Task task) {
+    return ListView.builder(
+      itemCount: task.options?.length ?? 0,
+      itemBuilder: (context, index) {
+        final option = task.options![index];
+        final bool isSelected = _selectedOption == index;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: InkWell(
+            onTap: () => _checkAnswer(index),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                border: Border.all(color: isSelected ? Theme.of(context).primaryColor : Colors.grey[300]!, width: isSelected ? 3 : 1),
+                borderRadius: BorderRadius.circular(16),
+                color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.05) : null,
+              ),
+              child: Text(option, style: const TextStyle(fontSize: 18)),
+            ),
+          ).animate(delay: (index * 100).ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
+        );
+      },
+    );
+  }
+
+  Widget _buildChatSimulation(Task task) {
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemCount: task.chatMessages?.length ?? 0,
+            itemBuilder: (context, index) {
+              final msg = task.chatMessages![index];
+              return Align(
+                alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: msg.isUser ? Colors.blue[100] : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(msg.text, style: const TextStyle(fontSize: 16)),
+                ),
+              );
+            },
+          ),
+        ),
+        const Divider(),
+        ...List.generate(task.options?.length ?? 0, (index) {
+           return Padding(
+             padding: const EdgeInsets.only(top: 8.0),
+             child: SizedBox(
+               width: double.infinity,
+               child: OutlinedButton(
+                 onPressed: () => _checkAnswer(index),
+                 child: Text(task.options![index]),
+               ),
+             ),
+           );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildFindTheCatch(Task task) {
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: Stack(
+              children: [
+                // Container simulating an image since I don't have real assets
+                Container(
+                  width: double.infinity,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey),
+                  ),
+                  child: const Center(child: Text('FAŁSZYWA WIADOMOŚĆ SMS\n\nOd: InPost\n"Twoja paczka czeka..."\nLink: bit.ly/123-xyz', textAlign: TextAlign.center)),
+                ),
+                // Clickable regions
+                ...task.catchRegions?.map((region) {
+                  return Positioned(
+                    left: region.x * 300, // Very simplified mapping
+                    top: region.y * 200,
+                    width: 100,
+                    height: 50,
+                    child: GestureDetector(
+                      onTap: () => _checkAnswer(0), // Correct in this simple mock
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: _isAnswered ? Colors.red : Colors.transparent, width: 2),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList() ?? [],
+              ],
+            ),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text('Kliknij w element, który wydaje Ci się podejrzany.', style: TextStyle(fontStyle: FontStyle.italic)),
+        ),
+      ],
+    );
+  }
+}
