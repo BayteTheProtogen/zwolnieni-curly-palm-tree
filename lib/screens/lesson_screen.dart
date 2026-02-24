@@ -25,6 +25,10 @@ class _LessonScreenState extends State<LessonScreen> {
     if (_isAnswered) return;
 
     final task = widget.lesson.tasks[_currentTaskIndex];
+    if (task.type == TaskType.theory) {
+      _nextTask();
+      return;
+    }
     setState(() {
       _selectedOption = index;
       _isAnswered = true;
@@ -179,6 +183,8 @@ class _LessonScreenState extends State<LessonScreen> {
         return _buildChatSimulation(task);
       case TaskType.findTheCatch:
         return _buildFindTheCatch(task);
+      case TaskType.theory:
+        return _buildTheoryTask(task);
     }
   }
 
@@ -244,6 +250,50 @@ class _LessonScreenState extends State<LessonScreen> {
              ),
            );
         }),
+      ],
+    );
+  }
+
+  Widget _buildTheoryTask(Task task) {
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  task.explanation,
+                  style: const TextStyle(fontSize: 20, height: 1.5),
+                ),
+                if (task.imageUrl != null) ...[
+                  const SizedBox(height: 24),
+                  Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(Icons.info_outline, size: 64, color: Colors.blue),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => _nextTask(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('ROZUMIEM'),
+          ),
+        ),
       ],
     );
   }

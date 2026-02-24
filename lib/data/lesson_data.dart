@@ -2,6 +2,39 @@ import '../models/lesson_models.dart';
 
 final List<Module> appModules = [
   Module(
+    id: 'm0',
+    title: 'Wstęp do Bezpieczeństwa',
+    description: 'Dlaczego warto dbać o swoje dane w internecie?',
+    lessons: [
+      Lesson(
+        id: 'm0_l1',
+        title: 'Cyfrowy Świat',
+        tasks: [
+          Task(
+            id: 'm0_l1_t1',
+            type: TaskType.theory,
+            question: 'Witaj w świecie bezpieczeństwa!',
+            explanation: 'Internet to wspaniałe miejsce, ale jak w prawdziwym świecie, musimy znać zasady bezpieczeństwa. Twoje dane, takie jak PESEL czy hasło do banku, są jak klucze do Twojego domu.',
+          ),
+          Task(
+            id: 'm0_l1_t2',
+            type: TaskType.theory,
+            question: 'Kto chce Twoich danych?',
+            explanation: 'Oszuści (cyberprzestępcy) chcą Twoich informacji, aby ukraść pieniądze lub podszyć się pod Ciebie. Będziemy Cię uczyć, jak ich przechytrzyć!',
+          ),
+          Task(
+            id: 'm0_l1_t3',
+            type: TaskType.multipleChoice,
+            question: 'Do czego można porównać hasło w internecie?',
+            options: ['Do nazwiska', 'Do klucza do mieszkania', 'Do numeru telefonu'],
+            correctOptionIndex: 1,
+            explanation: 'Hasło chroni dostęp do Twoich prywatnych rzeczy, tak jak klucz chroni Twój dom.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  Module(
     id: 'm1',
     title: 'Bezpieczne Hasła',
     description: 'Naucz się tworzyć hasła, których nikt nie zgadnie.',
@@ -10,6 +43,12 @@ final List<Module> appModules = [
         id: 'm1_l1',
         title: 'Podstawy silnego hasła',
         tasks: [
+          Task(
+            id: 'm1_l1_t0',
+            type: TaskType.theory,
+            question: 'Co to jest silne hasło?',
+            explanation: 'Silne hasło to takie, które trudno odgadnąć komputerowi i człowiekowi. Powinno mieć co najmniej 12 znaków i być mieszanką liter, cyfr i symboli.',
+          ),
           Task(
             id: 'm1_l1_t1',
             type: TaskType.multipleChoice,
@@ -33,12 +72,38 @@ final List<Module> appModules = [
         title: 'Menedżery haseł',
         tasks: [
           Task(
+            id: 'm1_l2_t0',
+            type: TaskType.theory,
+            question: 'Jak zapamiętać tyle haseł?',
+            explanation: 'Nie musisz! Menedżer haseł to aplikacja, która pamięta wszystkie hasła za Ciebie. Ty musisz pamiętać tylko jedno "główne" hasło do tego sejfu.',
+          ),
+          Task(
             id: 'm1_l2_t1',
             type: TaskType.multipleChoice,
             question: 'Gdzie najlepiej przechowywać hasła?',
             options: ['Na kartce przy monitorze', 'W głowie', 'W bezpiecznym menedżerze haseł', 'W pliku "hasla.txt"'],
             correctOptionIndex: 2,
             explanation: 'Menedżer haseł to bezpieczny cyfrowy sejf na Twoje dane.',
+          ),
+        ],
+      ),
+      Lesson(
+        id: 'm1_l3',
+        title: 'Weryfikacja dwuetapowa (2FA)',
+        tasks: [
+          Task(
+            id: 'm1_l3_t1',
+            type: TaskType.theory,
+            question: 'Druga linia obrony',
+            explanation: 'Nawet jeśli oszust pozna Twoje hasło, weryfikacja dwuetapowa go powstrzyma. To dodatkowy kod, który dostajesz np. SMS-em podczas logowania.',
+          ),
+          Task(
+            id: 'm1_l3_t2',
+            type: TaskType.multipleChoice,
+            question: 'Co daje weryfikacja dwuetapowa?',
+            options: ['Spowalnia logowanie', 'Dodatkową warstwę ochrony', 'Nic nie daje'],
+            correctOptionIndex: 1,
+            explanation: 'To jak drugi zamek w drzwiach – jeden klucz to za mało, by wejść.',
           ),
         ],
       ),
@@ -50,13 +115,25 @@ final List<Module> appModules = [
     description: 'Jak rozpoznać fałszywe wiadomości.',
     lessons: [
       Lesson(
+        id: 'm2_l0',
+        title: 'Czym jest Phishing?',
+        tasks: [
+          Task(
+            id: 'm2_l0_t1',
+            type: TaskType.theory,
+            question: 'Wędkarstwo oszustów',
+            explanation: 'Phishing (czyt. fiszing) to metoda, w której oszust "zarzuca haczyk" – wysyła wiadomość podszywając się pod znaną firmę, by skłonić Cię do podania danych.',
+          ),
+        ],
+      ),
+      Lesson(
         id: 'm2_l1',
         title: 'Fałszywe SMS-y',
         tasks: [
           Task(
             id: 'm2_l1_t1',
             type: TaskType.chatSimulation,
-            question: 'Dostajesz SMS od "InPostu":',
+            question: 'Dostajesz SMS od "ImPostu":',
             chatMessages: [
               ChatMessage(text: 'Twoja paczka została wstrzymana z powodu niedopłaty 1.50 zł. Kliknij: bit.ly/falszywy-link', isUser: false),
             ],
@@ -109,12 +186,30 @@ final List<Module> appModules = [
         title: 'Rozpoznawanie sklepu',
         tasks: [
           Task(
+            id: 'm3_l1_t0',
+            type: TaskType.theory,
+            question: 'Zanim klikniesz "Kupuję"',
+            explanation: 'Prawdziwy sklep powinien mieć regulamin, dane kontaktowe i adres w Polsce. Uważaj na sklepy, które istnieją od wczoraj i mają niesamowite promocje.',
+          ),
+          Task(
             id: 'm3_l1_t1',
             type: TaskType.multipleChoice,
             question: 'Widzisz super ofertę: iPhone za 200 zł na stronie "Alledrogo.pl.net". Co robisz?',
             options: ['Kupuję natychmiast!', 'Sprawdzam opinie i adres strony', 'To na pewno okazja'],
             correctOptionIndex: 1,
             explanation: 'Zbyt niskie ceny i dziwne adresy stron (jak .pl.net) to typowe znaki oszustwa.',
+          ),
+        ],
+      ),
+      Lesson(
+        id: 'm3_l2',
+        title: 'Bezpieczne Płatności',
+        tasks: [
+          Task(
+            id: 'm3_l2_t1',
+            type: TaskType.theory,
+            question: 'Jak płacić bezpiecznie?',
+            explanation: 'Najlepiej korzystać ze znanych metod: BLIK, szybkie przelewy przez bramki (np. PayU, Przelewy24) lub płatność przy odbiorze.',
           ),
         ],
       ),
@@ -129,6 +224,12 @@ final List<Module> appModules = [
         id: 'm4_l1',
         title: 'Logowanie do banku',
         tasks: [
+          Task(
+            id: 'm4_l1_t0',
+            type: TaskType.theory,
+            question: 'Twoja twierdza',
+            explanation: 'Nigdy nie loguj się do banku przez linki z e-maili lub SMS-ów. Zawsze wpisuj adres banku ręcznie lub używaj oficjalnej aplikacji.',
+          ),
           Task(
             id: 'm4_l1_t1',
             type: TaskType.multipleChoice,
@@ -158,6 +259,25 @@ final List<Module> appModules = [
             options: ['Wpisuję szybko', 'Zakrywam klawiaturę drugą ręką', 'Proszę kogoś o pomoc'],
             correctOptionIndex: 1,
             explanation: 'Zakrywanie klawiatury chroni Twój PIN przed ukrytymi kamerami oszustów.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  Module(
+    id: 'm5',
+    title: 'Media Społecznościowe',
+    description: 'Bezpieczeństwo na Facebooku i nie tylko.',
+    lessons: [
+      Lesson(
+        id: 'm5_l1',
+        title: 'Prywatność zdjęć',
+        tasks: [
+          Task(
+            id: 'm5_l1_t1',
+            type: TaskType.theory,
+            question: 'Kto to widzi?',
+            explanation: 'Zdjęcia Twoich wnuków lub Twojego domu nie muszą być widoczne dla całego świata. Ustaw widoczność postów "Tylko dla znajomych".',
           ),
         ],
       ),

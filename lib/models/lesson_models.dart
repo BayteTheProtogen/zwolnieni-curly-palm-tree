@@ -2,6 +2,7 @@ enum TaskType {
   multipleChoice,
   chatSimulation,
   findTheCatch,
+  theory,
 }
 
 class Module {
