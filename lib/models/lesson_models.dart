@@ -52,8 +52,10 @@ class Task {
     required this.question,
     this.options,
     this.correctOptionIndex,
+    this.correctOrder,
     this.chatMessages,
     this.imageUrl,
+    this.secondaryImageUrl,
     this.catchRegions,
     required this.explanation,
   });
