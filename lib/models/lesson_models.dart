@@ -3,6 +3,8 @@ enum TaskType {
   chatSimulation,
   findTheCatch,
   theory,
+  spotTheDifference,
+  ordering,
 }
 
 class Module {
@@ -37,8 +39,10 @@ class Task {
   final String question;
   final List<String>? options;
   final int? correctOptionIndex;
+  final List<int>? correctOrder;
   final List<ChatMessage>? chatMessages;
   final String? imageUrl;
+  final String? secondaryImageUrl;
   final List<CatchRegion>? catchRegions;
   final String explanation;
 

@@ -279,6 +279,69 @@ final List<Module> appModules = [
             question: 'Kto to widzi?',
             explanation: 'Zdjęcia Twoich wnuków lub Twojego domu nie muszą być widoczne dla całego świata. Ustaw widoczność postów "Tylko dla znajomych".',
           ),
+          Task(
+            id: 'm5_l1_t2',
+            type: TaskType.spotTheDifference,
+            question: 'Który profil jest poprawnie zabezpieczony?',
+            imageUrl: 'secure_profile.png',
+            secondaryImageUrl: 'public_profile.png',
+            correctOptionIndex: 0,
+            explanation: 'Profil prywatny (A) pozwala widzieć posty tylko osobom, które zaakceptujesz.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  Module(
+    id: 'm6',
+    title: 'Bezpieczny Smartfon',
+    description: 'Twój telefon to Twój portfel i pamiętnik.',
+    lessons: [
+      Lesson(
+        id: 'm6_l1',
+        title: 'Blokada ekranu',
+        tasks: [
+          Task(
+            id: 'm6_l1_t1',
+            type: TaskType.theory,
+            question: 'Dlaczego blokować?',
+            explanation: 'Zawsze miej ustawioną blokadę ekranu (PIN, wzór lub odcisk palca). Jeśli zgubisz telefon, nikt nie dobierze się do Twoich banków i zdjęć.',
+          ),
+          Task(
+            id: 'm6_l1_t2',
+            type: TaskType.ordering,
+            question: 'Co robisz, gdy zgubisz telefon?',
+            options: ['Dzwonię do banku zablokować kartę', 'Używam "Znajdź moje urządzenie"', 'Zgłaszam na policję'],
+            correctOrder: [1, 0, 2],
+            explanation: 'Najpierw spróbuj namierzyć telefon i zdalnie go zablokować, potem zabezpiecz swoje pieniądze.',
+          ),
+        ],
+      ),
+    ],
+  ),
+  Module(
+    id: 'm7',
+    title: 'Sieci WiFi i Internet',
+    description: 'Jak łączyć się bezpiecznie w kawiarni i u lekarza.',
+    lessons: [
+      Lesson(
+        id: 'm7_l1',
+        title: 'Publiczne WiFi',
+        tasks: [
+          Task(
+            id: 'm7_l1_t1',
+            type: TaskType.theory,
+            question: 'Darmowy Internet?',
+            explanation: 'Publiczne, otwarte sieci WiFi w galeriach czy parkach mogą być "podsłuchiwane" przez oszustów. Nigdy nie loguj się do banku w takiej sieci!',
+          ),
+          Task(
+            id: 'm7_l1_t2',
+            type: TaskType.multipleChoice,
+            question: 'Musisz zapłacić rachunek w kawiarni na ich darmowym WiFi. Co robisz?',
+            options: ['Płacę szybko', 'Wyłączam WiFi i używam danych komórkowych', 'Pytam kelnera o hasło i wtedy płacę'],
+            correctOptionIndex: 1,
+            explanation: 'Twoje dane komórkowe są znacznie bezpieczniejsze niż darmowe WiFi w miejscu publicznym.',
+          ),
         ],
       ),
     ],

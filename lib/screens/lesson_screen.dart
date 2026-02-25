@@ -185,6 +185,10 @@ class _LessonScreenState extends State<LessonScreen> {
         return _buildFindTheCatch(task);
       case TaskType.theory:
         return _buildTheoryTask(task);
+      case TaskType.spotTheDifference:
+        return _buildSpotTheDifference(task);
+      case TaskType.ordering:
+        return _buildOrderingTask(task);
     }
   }
 
@@ -295,6 +299,109 @@ class _LessonScreenState extends State<LessonScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  List<int> _currentOrder = [];
+
+  Widget _buildOrderingTask(Task task) {
+    return Column(
+      children: [
+        const Text('Ułóż kroki w poprawnej kolejności:', style: TextStyle(fontStyle: FontStyle.italic)),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: _currentOrder.map((idx) => Card(
+              child: ListTile(
+                leading: CircleAvatar(child: Text('${_currentOrder.indexOf(idx) + 1}')),
+                title: Text(task.options![idx]),
+              ),
+            )).toList(),
+          ),
+        ),
+        const Spacer(),
+        Wrap(
+          spacing: 8,
+          children: List.generate(task.options?.length ?? 0, (index) {
+            final bool isPicked = _currentOrder.contains(index);
+            return ElevatedButton(
+              onPressed: isPicked ? null : () {
+                setState(() {
+                  _currentOrder.add(index);
+                  if (_currentOrder.length == task.options!.length) {
+                    _isAnswered = true;
+                    _isCorrect = true;
+                    for (int i = 0; i < _currentOrder.length; i++) {
+                      if (_currentOrder[i] != task.correctOrder![i]) {
+                        _isCorrect = false;
+                        break;
+                      }
+                    }
+                    _mascotExpression = _isCorrect ? MascotExpression.happy : MascotExpression.sad;
+                    _showFeedback();
+                  }
+                });
+              },
+              child: Text(task.options![index]),
+            );
+          }),
+        ),
+        if (_currentOrder.isNotEmpty)
+          TextButton(
+            onPressed: () => setState(() => _currentOrder.clear()),
+            child: const Text('Zacznij od nowa'),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSpotTheDifference(Task task) {
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () => _checkAnswer(0),
+            child: _buildSpotCard('Opcja A', task.imageUrl, 0),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: InkWell(
+            onTap: () => _checkAnswer(1),
+            child: _buildSpotCard('Opcja B', task.secondaryImageUrl, 1),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpotCard(String label, String? url, int index) {
+    final bool isSelected = _selectedOption == index;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: isSelected ? Theme.of(context).primaryColor : Colors.grey[300]!, width: isSelected ? 3 : 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              color: Colors.grey[100],
+              child: const Center(child: Icon(Icons.image_search, size: 48, color: Colors.grey)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text('Kliknij, aby wybrać', style: TextStyle(fontSize: 12)),
+        ],
+      ),
     );
   }
 
