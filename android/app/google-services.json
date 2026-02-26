@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "602122649762",
+    "project_id": "zwolnieni-5ac99",
+    "storage_bucket": "zwolnieni-5ac99.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602122649762:android:243f2063d98fca700c97fb",
+        "android_client_info": {
+          "package_name": "cherry.ta3.przewodnik"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCU_4dz34uZlzr1b7-8MKj1oOmaQhtKTrU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

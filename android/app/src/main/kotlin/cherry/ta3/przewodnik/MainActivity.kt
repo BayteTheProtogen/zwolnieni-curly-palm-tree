@@ -1,4 +1,4 @@
-package com.cybersecure.cyber_secure_app
+package cherry.ta3.przewodnik
 
 import io.flutter.embedding.android.FlutterActivity
 
