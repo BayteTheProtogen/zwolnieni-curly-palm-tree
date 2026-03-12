@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../models/lesson_models.dart';
 import '../providers/app_provider.dart';
 import '../widgets/mascot.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import '../data/lesson_data.dart';
+import 'dart:async';
 
 class LessonScreen extends StatefulWidget {
   final Lesson lesson;
-
   const LessonScreen({super.key, required this.lesson});
 
   @override
@@ -17,61 +18,64 @@ class LessonScreen extends StatefulWidget {
 class _LessonScreenState extends State<LessonScreen> {
   int _currentTaskIndex = 0;
   bool _isAnswered = false;
-  int? _selectedOption;
   bool _isCorrect = false;
+  int? _selectedOption;
   MascotExpression _mascotExpression = MascotExpression.neutral;
+
+  // Stats tracking
+  int _totalErrors = 0;
+  late DateTime _startTime;
+  List<TaskError> _errorsList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+  }
 
   void _checkAnswer(int index) {
     if (_isAnswered) return;
 
     final task = widget.lesson.tasks[_currentTaskIndex];
-    if (task.type == TaskType.theory) {
-      _nextTask();
-      return;
-    }
     setState(() {
       _selectedOption = index;
       _isAnswered = true;
-      _isCorrect = (index == task.correctOptionIndex);
+      _isCorrect = index == task.correctOptionIndex;
+
+      if (!_isCorrect) {
+        _totalErrors++;
+        _errorsList.add(TaskError(
+          taskQuestion: task.question,
+          userAnswer: task.options?[index] ?? 'Nieznana',
+          correctAnswer: task.options?[task.correctOptionIndex!] ?? 'Nieznana',
+          explanation: task.explanation,
+        ));
+      }
+
       _mascotExpression = _isCorrect ? MascotExpression.happy : MascotExpression.sad;
     });
+
     _showFeedback();
   }
 
   void _showFeedback() {
     final task = widget.lesson.tasks[_currentTaskIndex];
-    showModalBottomSheet(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: _isCorrect ? Colors.green[100] : Colors.red[100],
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        height: 250,
-        child: Column(
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(_isCorrect ? Icons.check_circle : Icons.error, color: _isCorrect ? Colors.green : Colors.red, size: 40),
-                const SizedBox(width: 16),
-                Text(_isCorrect ? 'Świetnie!' : 'Nie martw się!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _isCorrect ? Colors.green[900] : Colors.red[900])),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(task.explanation, style: const TextStyle(fontSize: 18)),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _nextTask();
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: _isCorrect ? Colors.green : Colors.red, foregroundColor: Colors.white),
-                child: const Text('DALEJ'),
-              ),
-            ),
+            Text(_isCorrect ? 'ŚWIETNIE!' : 'OJ, NIESTETY...'),
+            Text(task.explanation, style: const TextStyle(fontSize: 14)),
           ],
+        ),
+        backgroundColor: _isCorrect ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'DALEJ',
+          textColor: Colors.white,
+          onPressed: () => _nextTask(),
         ),
       ),
     );
@@ -82,8 +86,10 @@ class _LessonScreenState extends State<LessonScreen> {
       setState(() {
         _currentTaskIndex++;
         _isAnswered = false;
+        _isCorrect = false;
         _selectedOption = null;
         _mascotExpression = MascotExpression.neutral;
+        _currentOrder.clear();
       });
     } else {
       _finishLesson();
@@ -91,29 +97,21 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   void _finishLesson() {
-    final provider = Provider.of<AppProvider>(context, listen: false);
-    provider.addXp(10);
-    provider.completeLesson(widget.lesson.id);
+    final endTime = DateTime.now();
+    final duration = endTime.difference(_startTime);
+    final totalTasks = widget.lesson.tasks.length;
+    final correctTasks = totalTasks - _errorsList.length;
+    final accuracy = (correctTasks / totalTasks) * 100;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Lekcja Ukończona!'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CyberMascot(expression: MascotExpression.dancing, size: 150),
-            const SizedBox(height: 16),
-            const Text('Zyskałeś +10 XP'),
-          ],
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => LessonCompletionScreen(
+          lesson: widget.lesson,
+          accuracy: accuracy,
+          totalErrors: _totalErrors,
+          duration: duration,
+          errors: _errorsList,
         ),
-        actions: [
-          TextButton(onPressed: () {
-            Navigator.pop(context);
-            Navigator.pop(context);
-          }, child: const Text('WRÓĆ DO MAPY')),
-        ],
       ),
     );
   }
@@ -125,21 +123,10 @@ class _LessonScreenState extends State<LessonScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-        title: Row(
-          children: [
-            Expanded(child: LinearProgressIndicator(value: progress, minHeight: 12, borderRadius: BorderRadius.circular(6))),
-            const SizedBox(width: 8),
-            Hero(
-              tag: 'lesson_${widget.lesson.id}',
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
-                child: const Icon(Icons.school, size: 16, color: Colors.white),
-              ),
-            ),
-          ],
+        title: Text(widget.lesson.title),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(6),
+          child: LinearProgressIndicator(value: progress),
         ),
       ),
       body: Padding(
@@ -149,15 +136,15 @@ class _LessonScreenState extends State<LessonScreen> {
             Row(
               children: [
                 Hero(
-                  tag: 'mascot_main',
-                  child: CyberMascot(expression: _mascotExpression, size: 80),
+                  tag: 'mascot_${widget.lesson.id}',
+                  child: CyberMascot(expression: _mascotExpression, size: 100),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
+                      color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(task.question, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
@@ -181,14 +168,12 @@ class _LessonScreenState extends State<LessonScreen> {
         return _buildMultipleChoice(task);
       case TaskType.chatSimulation:
         return _buildChatSimulation(task);
-      case TaskType.findTheCatch:
-        return _buildFindTheCatch(task);
       case TaskType.theory:
         return _buildTheoryTask(task);
-      case TaskType.spotTheDifference:
-        return _buildSpotTheDifference(task);
       case TaskType.ordering:
         return _buildOrderingTask(task);
+      default:
+        return const Center(child: Text('Typ zadania w budowie'));
     }
   }
 
@@ -263,26 +248,9 @@ class _LessonScreenState extends State<LessonScreen> {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.explanation,
-                  style: const TextStyle(fontSize: 20, height: 1.5),
-                ),
-                if (task.imageUrl != null) ...[
-                  const SizedBox(height: 24),
-                  Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(Icons.info_outline, size: 64, color: Colors.blue),
-                  ),
-                ],
-              ],
+            child: Text(
+              task.explanation,
+              style: const TextStyle(fontSize: 20, height: 1.5),
             ),
           ),
         ),
@@ -291,10 +259,6 @@ class _LessonScreenState extends State<LessonScreen> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () => _nextTask(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-            ),
             child: const Text('ROZUMIEM'),
           ),
         ),
@@ -342,6 +306,15 @@ class _LessonScreenState extends State<LessonScreen> {
                         break;
                       }
                     }
+                    if (!_isCorrect) {
+                       _totalErrors++;
+                       _errorsList.add(TaskError(
+                         taskQuestion: task.question,
+                         userAnswer: 'Błędna kolejność',
+                         correctAnswer: 'Poprawna kolejność',
+                         explanation: task.explanation,
+                       ));
+                    }
                     _mascotExpression = _isCorrect ? MascotExpression.happy : MascotExpression.sad;
                     _showFeedback();
                   }
@@ -351,104 +324,187 @@ class _LessonScreenState extends State<LessonScreen> {
             );
           }),
         ),
-        if (_currentOrder.isNotEmpty)
-          TextButton(
-            onPressed: () => setState(() => _currentOrder.clear()),
-            child: const Text('Zacznij od nowa'),
-          ),
       ],
     );
   }
+}
 
-  Widget _buildSpotTheDifference(Task task) {
-    return Row(
-      children: [
-        Expanded(
-          child: InkWell(
-            onTap: () => _checkAnswer(0),
-            child: _buildSpotCard('Opcja A', task.imageUrl, 0),
+class TaskError {
+  final String taskQuestion;
+  final String userAnswer;
+  final String correctAnswer;
+  final String explanation;
+
+  TaskError({
+    required this.taskQuestion,
+    required this.userAnswer,
+    required this.correctAnswer,
+    required this.explanation,
+  });
+}
+
+class LessonCompletionScreen extends StatelessWidget {
+  final Lesson lesson;
+  final double accuracy;
+  final int totalErrors;
+  final Duration duration;
+  final List<TaskError> errors;
+
+  const LessonCompletionScreen({
+    super.key,
+    required this.lesson,
+    required this.accuracy,
+    required this.totalErrors,
+    required this.duration,
+    required this.errors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isPassed = accuracy >= 35;
+    final int xpEarned = isPassed ? (accuracy * 0.5).toInt() + 10 : 0;
+    final provider = Provider.of<AppProvider>(context, listen: false);
+
+    if (isPassed) {
+      provider.addXp(xpEarned);
+      provider.completeLesson(lesson.id);
+
+      // Check if module is complete for badge
+      final module = cybersecurityModules.firstWhere((m) => m.lessons.any((l) => l.id == lesson.id));
+      final allLessonIds = module.lessons.map((l) => l.id).toSet();
+      if (allLessonIds.every((id) => provider.completedLessons.contains(id) || id == lesson.id)) {
+        if (module.badge != null) {
+          provider.earnBadge(module.badge!.id);
+        }
+      }
+    }
+
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isPassed
+              ? [Colors.blue[900]!, Colors.blue[700]!]
+              : [Colors.red[900]!, Colors.red[700]!],
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: InkWell(
-            onTap: () => _checkAnswer(1),
-            child: _buildSpotCard('Opcja B', task.secondaryImageUrl, 1),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              CyberMascot(
+                expression: isPassed ? MascotExpression.winning : MascotExpression.sobbing,
+                size: 150,
+              ).animate().scale(delay: 200.ms, duration: 600.ms, curve: Curves.elasticOut),
+              const SizedBox(height: 32),
+              Text(
+                isPassed ? 'BRAWO!' : 'SPRÓBUJ PONOWNIE',
+                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isPassed ? 'Lekcja ukończona pomyślnie' : 'Musisz uzyskać min. 35% poprawności',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70, fontSize: 18),
+              ),
+              const Spacer(),
+              _buildStatRow('Poprawność', '${accuracy.toInt()}%', Icons.check_circle),
+              _buildStatRow('Czas', '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}', Icons.timer),
+              _buildStatRow('Zarobione XP', '+$xpEarned XP', Icons.stars),
+              const Spacer(),
+              if (errors.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: OutlinedButton(
+                    onPressed: () => _showErrors(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white),
+                    ),
+                    child: const Text('ZOBACZ PODSUMOWANIE BŁĘDÓW'),
+                  ),
+                ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: isPassed ? Colors.blue[900] : Colors.red[900],
+                  ),
+                  child: const Text('WRÓĆ DO MAPY'),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildSpotCard(String label, String? url, int index) {
-    final bool isSelected = _selectedOption == index;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: isSelected ? Theme.of(context).primaryColor : Colors.grey[300]!, width: isSelected ? 3 : 1),
-        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
+    );
+  }
+
+  Widget _buildStatRow(String label, String value, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Container(
-              color: Colors.grey[100],
-              child: const Center(child: Icon(Icons.image_search, size: 48, color: Colors.grey)),
-            ),
+          Row(
+            children: [
+              Icon(icon, color: Colors.white70),
+              const SizedBox(width: 8),
+              Text(label, style: const TextStyle(color: Colors.white, fontSize: 18)),
+            ],
           ),
-          const SizedBox(height: 8),
-          const Text('Kliknij, aby wybrać', style: TextStyle(fontSize: 12)),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  Widget _buildFindTheCatch(Task task) {
-    return Column(
-      children: [
-        Expanded(
-          child: Center(
-            child: Stack(
-              children: [
-                // Container simulating an image since I don't have real assets
-                Container(
-                  width: double.infinity,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey),
-                  ),
-                  child: const Center(child: Text('FAŁSZYWA WIADOMOŚĆ SMS\n\nOd: InPost\n"Twoja paczka czeka..."\nLink: bit.ly/123-xyz', textAlign: TextAlign.center)),
-                ),
-                // Clickable regions
-                ...task.catchRegions?.map((region) {
-                  return Positioned(
-                    left: region.x * 300, // Very simplified mapping
-                    top: region.y * 200,
-                    width: 100,
-                    height: 50,
-                    child: GestureDetector(
-                      onTap: () => _checkAnswer(0), // Correct in this simple mock
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: _isAnswered ? Colors.red : Colors.transparent, width: 2),
-                        ),
+  void _showErrors(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Twoje błędy', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                itemCount: errors.length,
+                itemBuilder: (context, index) {
+                  final e = errors[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(e.taskQuestion, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Text('Twoja odpowiedź: ${e.userAnswer}', style: const TextStyle(color: Colors.red)),
+                          Text('Poprawna: ${e.correctAnswer}', style: const TextStyle(color: Colors.green)),
+                          const Divider(),
+                          Text(e.explanation, style: const TextStyle(fontStyle: FontStyle.italic)),
+                        ],
                       ),
                     ),
                   );
-                }).toList() ?? [],
-              ],
+                },
+              ),
             ),
-          ),
+          ],
         ),
-        const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text('Kliknij w element, który wydaje Ci się podejrzany.', style: TextStyle(fontStyle: FontStyle.italic)),
-        ),
-      ],
+      ),
     );
   }
 }
