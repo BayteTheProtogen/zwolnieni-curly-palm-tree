@@ -70,9 +70,9 @@ class LessonMap extends StatelessWidget {
       ),
       body: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 24),
-        itemCount: appModules.length,
+        itemCount: cybersecurityModules.length,
         itemBuilder: (context, moduleIndex) {
-          final module = appModules[moduleIndex];
+          final module = cybersecurityModules[moduleIndex];
           return Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

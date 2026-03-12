@@ -102,11 +102,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  SwitchListTile(
-                    title: const Text('Większy tekst (Tryb Seniora)'),
-                    value: appProvider.isSeniorMode,
-                    onChanged: (value) => appProvider.setSeniorMode(value),
+                  Slider(
+                    value: appProvider.fontSizeMultiplier,
+                    min: 1.0,
+                    max: 1.8,
+                    divisions: 4,
+                    label: 'Wielkość tekstu',
+                    onChanged: (val) => appProvider.setFontSizeMultiplier(val),
                   ),
+                  const Text('Przesuń, aby powiększyć tekst'),
+                  const SizedBox(height: 16),
                   SwitchListTile(
                     title: const Text('Wysoki kontrast'),
                     value: appProvider.highContrast,
@@ -136,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: ElevatedButton(
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('showOnboarding', false);
+                await prefs.setBool('seenOnboarding', true);
                 if (mounted) {
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
                 }

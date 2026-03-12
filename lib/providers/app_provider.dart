@@ -9,6 +9,7 @@ class AppProvider extends ChangeNotifier {
   bool _highContrast = false;
   double _fontSizeMultiplier = 1.0;
   Set<String> _completedLessons = {};
+  Set<String> _earnedBadgeIds = {};
 
   int get xp => _xp;
   int get streak => _streak;
@@ -16,6 +17,7 @@ class AppProvider extends ChangeNotifier {
   bool get highContrast => _highContrast;
   double get fontSizeMultiplier => _fontSizeMultiplier;
   Set<String> get completedLessons => _completedLessons;
+  Set<String> get earnedBadgeIds => _earnedBadgeIds;
 
   AppProvider() {
     _loadData();
@@ -29,6 +31,7 @@ class AppProvider extends ChangeNotifier {
     _highContrast = prefs.getBool('highContrast') ?? false;
     _fontSizeMultiplier = prefs.getDouble('fontSizeMultiplier') ?? 1.0;
     _completedLessons = (prefs.getStringList('completedLessons') ?? []).toSet();
+    _earnedBadgeIds = (prefs.getStringList('earnedBadgeIds') ?? []).toSet();
 
     final lastActivityStr = prefs.getString('lastActivityDate');
     if (lastActivityStr != null) {
@@ -69,9 +72,9 @@ class AppProvider extends ChangeNotifier {
     await prefs.setString('lastActivityDate', now.toIso8601String());
   }
 
-  Future<void> setSeniorMode(bool value) async {
-    _isSeniorMode = value;
-    _fontSizeMultiplier = value ? 1.4 : 1.0;
+  Future<void> setFontSizeMultiplier(double value) async {
+    _fontSizeMultiplier = value;
+    _isSeniorMode = value > 1.2;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isSeniorMode', _isSeniorMode);
     await prefs.setDouble('fontSizeMultiplier', _fontSizeMultiplier);
@@ -89,6 +92,13 @@ class AppProvider extends ChangeNotifier {
     _completedLessons.add(lessonId);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('completedLessons', _completedLessons.toList());
+    notifyListeners();
+  }
+
+  Future<void> earnBadge(String badgeId) async {
+    _earnedBadgeIds.add(badgeId);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('earnedBadgeIds', _earnedBadgeIds.toList());
     notifyListeners();
   }
 }
