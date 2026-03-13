@@ -59,14 +59,14 @@ class Lesson {
   Lesson({required this.id, required this.title, required this.tasks});
 }
 
-class Module {
+class CybersecurityModule {
   final String id;
   final String title;
   final String description;
   final List<Lesson> lessons;
   final CyberBadge? badge;
 
-  Module({
+  CybersecurityModule({
     required this.id,
     required this.title,
     required this.description,
