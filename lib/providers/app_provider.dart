@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/lesson_data.dart';
 
 class AppProvider extends ChangeNotifier {
   int _xp = 0;
@@ -92,6 +93,17 @@ class AppProvider extends ChangeNotifier {
     _completedLessons.add(lessonId);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('completedLessons', _completedLessons.toList());
+
+    // Check for badges
+    for (var module in cybersecurityModules) {
+      final allLessonIds = module.lessons.map((l) => l.id).toSet();
+      if (allLessonIds.every((id) => _completedLessons.contains(id))) {
+        if (module.badge != null && !_earnedBadgeIds.contains(module.badge!.id)) {
+          await earnBadge(module.badge!.id);
+        }
+      }
+    }
+
     notifyListeners();
   }
 

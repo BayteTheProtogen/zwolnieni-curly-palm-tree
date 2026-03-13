@@ -6,11 +6,13 @@ enum MascotExpression { neutral, happy, sad, thinking, dancing, sobbing, winning
 class CyberMascot extends StatefulWidget {
   final MascotExpression expression;
   final double size;
+  final bool showContainer;
 
   const CyberMascot({
     super.key,
     this.expression = MascotExpression.neutral,
     this.size = 200,
+    this.showContainer = true,
   });
 
   @override
@@ -44,7 +46,7 @@ class _CyberMascotState extends State<CyberMascot> with TickerProviderStateMixin
       case MascotExpression.thinking:
         return '( . _ . )';
       case MascotExpression.dancing:
-        return '\\( ^ o ^ )/';
+        return r'\( ^ o ^ )/';
       case MascotExpression.sobbing:
         return '( T _ T )';
       case MascotExpression.winning:
@@ -56,6 +58,8 @@ class _CyberMascotState extends State<CyberMascot> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final Color neonCyan = const Color(0xFF00FFE0);
+
     return AnimatedBuilder(
       animation: _idleController,
       builder: (context, child) {
@@ -67,28 +71,53 @@ class _CyberMascotState extends State<CyberMascot> with TickerProviderStateMixin
           offset: Offset(0, bobbing),
           child: Transform.scale(
             scale: breathing,
-            child: Container(
-              width: widget.size,
-              height: widget.size * 0.8,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(widget.size / 2),
-                border: Border.all(
-                  color: Theme.of(context).primaryColor,
-                  width: 4,
+            child: widget.showContainer
+              ? Container(
+                  width: widget.size,
+                  height: widget.size * 0.6,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: neonCyan.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: neonCyan.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: neonCyan.withValues(alpha: 0.1),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    _getAsciiFace(widget.expression),
+                    style: TextStyle(
+                      fontSize: widget.size * 0.18,
+                      fontWeight: FontWeight.bold,
+                      color: neonCyan,
+                      fontFamily: 'monospace',
+                      shadows: [
+                        Shadow(color: neonCyan, blurRadius: 10),
+                      ],
+                    ),
+                  ),
+                )
+              : Center(
+                  child: Text(
+                    _getAsciiFace(widget.expression),
+                    style: TextStyle(
+                      fontSize: widget.size * 0.25,
+                      fontWeight: FontWeight.bold,
+                      color: neonCyan,
+                      fontFamily: 'monospace',
+                      shadows: [
+                        Shadow(color: neonCyan, blurRadius: 20),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                _getAsciiFace(widget.expression),
-                style: TextStyle(
-                  fontSize: widget.size * 0.15,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ),
           ),
         );
       },

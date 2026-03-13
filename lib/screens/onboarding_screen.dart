@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/app_provider.dart';
 import '../widgets/mascot.dart';
 import 'home_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,143 +16,145 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  final List<OnboardingData> _pages = [
+    OnboardingData(
+      title: 'Witaj w CyberBezpieczni!',
+      description: 'Razem nauczymy się, jak bezpiecznie poruszać się po internecie.',
+      expression: MascotExpression.happy,
+    ),
+    OnboardingData(
+      title: 'Dostosuj aplikację',
+      description: 'Dla Twojej wygody możesz powiększyć tekst i zmienić kontrast.',
+      expression: MascotExpression.thinking,
+      isAccessibilityPage: true,
+    ),
+    OnboardingData(
+      title: 'Zaczynajmy!',
+      description: 'Czekają na Ciebie krótkie lekcje i ciekawe zadania.',
+      expression: MascotExpression.dancing,
+    ),
+  ];
+
+  void _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('seenOnboarding', true);
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    const Color neonCyan = Color(0xFF00FFE0);
+
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0C10),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
-              child: PageView(
+              child: PageView.builder(
                 controller: _pageController,
-                onPageChanged: (index) => setState(() => _currentPage = index),
+                onPageChanged: (int page) => setState(() => _currentPage = page),
+                itemCount: _pages.length,
+                itemBuilder: (context, index) => _OnboardingPage(data: _pages[index]),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildPage(
-                    title: 'Witaj!',
-                    description: 'Jestem Twoim przewodnikiem po świecie cyberbezpieczeństwa.',
-                    expression: MascotExpression.happy,
+                  Row(
+                    children: List.generate(
+                      _pages.length,
+                      (index) => Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _currentPage == index ? neonCyan : Colors.grey,
+                        ),
+                      ),
+                    ),
                   ),
-                  _buildPage(
-                    title: 'Bezpieczeństwo jest proste',
-                    description: 'Nauczysz się jak rozpoznawać oszustwa i chronić swoje pieniądze.',
-                    expression: MascotExpression.neutral,
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_currentPage < _pages.length - 1) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeIn,
+                        );
+                      } else {
+                        _finishOnboarding();
+                      }
+                    },
+                    child: Text(_currentPage == _pages.length - 1 ? 'START' : 'DALEJ'),
                   ),
-                  _buildAccessibilityPage(),
-                  _buildStartPage(),
                 ],
               ),
             ),
-            _buildDots(),
-            const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildDots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) => AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        height: 8,
-        width: _currentPage == index ? 24 : 8,
-        decoration: BoxDecoration(
-          color: _currentPage == index ? Theme.of(context).primaryColor : Colors.grey,
-          borderRadius: BorderRadius.circular(4),
-        ),
-      )),
-    );
-  }
+class OnboardingData {
+  final String title;
+  final String description;
+  final MascotExpression expression;
+  final bool isAccessibilityPage;
 
-  Widget _buildPage({required String title, required String description, MascotExpression expression = MascotExpression.neutral}) {
+  OnboardingData({
+    required this.title,
+    required this.description,
+    required this.expression,
+    this.isAccessibilityPage = false,
+  });
+}
+
+class _OnboardingPage extends StatelessWidget {
+  final OnboardingData data;
+
+  const _OnboardingPage({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<AppProvider>(context);
+
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: const EdgeInsets.symmetric(horizontal: 40.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Hero(
-            tag: 'mascot_main',
-            child: CyberMascot(expression: expression, size: 150),
-          ).animate().scale(delay: 200.ms),
+          CyberMascot(expression: data.expression, size: 200),
           const SizedBox(height: 48),
-          Text(title, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          Text(
+            data.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 24),
-          Text(description, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccessibilityPage() {
-    final appProvider = Provider.of<AppProvider>(context);
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CyberMascot(expression: MascotExpression.thinking, size: 120),
-          const SizedBox(height: 32),
-          const Text('Dostosujmy aplikację do Ciebie', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-          const SizedBox(height: 32),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Slider(
-                    value: appProvider.fontSizeMultiplier,
-                    min: 1.0,
-                    max: 1.8,
-                    divisions: 4,
-                    label: 'Wielkość tekstu',
-                    onChanged: (val) => appProvider.setFontSizeMultiplier(val),
-                  ),
-                  const Text('Przesuń, aby powiększyć tekst'),
-                  const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: const Text('Wysoki kontrast'),
-                    value: appProvider.highContrast,
-                    onChanged: (value) => appProvider.setHighContrast(value),
-                  ),
-                ],
-              ),
-            ),
+          Text(
+            data.description,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18, color: Colors.grey),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStartPage() {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CyberMascot(expression: MascotExpression.dancing, size: 150),
-          const SizedBox(height: 48),
-          const Text('Zaczynamy?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('seenOnboarding', true);
-                if (mounted) {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-              ),
-              child: const Text('Rozpocznij Naukę', style: TextStyle(fontSize: 20)),
+          if (data.isAccessibilityPage) ...[
+            const SizedBox(height: 32),
+            const Text('Wielkość tekstu', style: TextStyle(color: Colors.white70)),
+            Slider(
+              value: provider.fontSizeMultiplier,
+              min: 1.0,
+              max: 2.0,
+              onChanged: (val) => provider.setFontSizeMultiplier(val),
+              activeColor: const Color(0xFF00FFE0),
             ),
-          ),
+          ],
         ],
       ),
     );

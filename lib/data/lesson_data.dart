@@ -1,7 +1,7 @@
 import '../models/lesson_models.dart';
 
-final List<Module> cybersecurityModules = [
-  Module(
+final List<CybersecurityModule> cybersecurityModules = [
+  CybersecurityModule(
     id: 'm1',
     title: 'Mocne Hasła',
     description: 'Naucz się tworzyć hasła nie do złamania.',
@@ -54,7 +54,7 @@ final List<Module> cybersecurityModules = [
       ),
     ],
   ),
-  Module(
+  CybersecurityModule(
     id: 'm2',
     title: 'Phishing i Oszustwa',
     description: 'Jak rozpoznać fałszywe wiadomości.',
@@ -84,7 +84,7 @@ final List<Module> cybersecurityModules = [
       ),
     ],
   ),
-  Module(
+  CybersecurityModule(
     id: 'm3',
     title: 'Bezpieczne Zakupy',
     description: 'Kupuj w sieci bez strachu.',
@@ -111,7 +111,7 @@ final List<Module> cybersecurityModules = [
       ),
     ],
   ),
-  Module(
+  CybersecurityModule(
     id: 'm4',
     title: 'Bankowość Mobilna',
     description: 'Twoje pieniądze są bezpieczne.',
